@@ -86,6 +86,7 @@ void main() {
       ProviderScope(
         overrides: [
           expenseRepositoryProvider.overrideWithValue(repository),
+          creditPaidMonthProvider.overrideWith((ref) async => 0),
           authUserProvider.overrideWith((ref) => Stream.value(role.name)),
           profileProvider.overrideWith(
             (ref) async => SessionProfile(
@@ -357,6 +358,8 @@ void main() {
     (tester) async {
       final repository = FakeExpenseRepository();
       await mount(tester, repository, const CreditScreen());
+      await tester.ensureVisible(find.text('Record payment'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Record payment'));
       await tester.pumpAndSettle();
       await tester.enterText(

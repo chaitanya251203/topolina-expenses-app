@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/accounting/money.dart';
 import '../../core/time/business_day.dart';
@@ -11,6 +12,27 @@ import '../../core/widgets/status_panel.dart';
 import '../authentication/auth_repository.dart';
 import '../expenses/expense_repository.dart';
 import '../expenses/expense_widgets.dart';
+import 'vendor_statement.dart';
+import 'vendor_statement_screen.dart';
+
+Future<bool?> showLedgerPayment(
+  BuildContext context,
+  ExpenseRecord record,
+  ExpenseEntryContext entry,
+) => showModalBottomSheet<bool>(
+  context: context,
+  isScrollControlled: true,
+  useSafeArea: true,
+  isDismissible: false,
+  enableDrag: false,
+  builder: (_) => _PaymentSheet(record: record, entry: entry),
+);
+
+final creditPaidMonthProvider = FutureProvider.autoDispose<int>((ref) async {
+  ref.watch(financialChangesProvider);
+  final data = await Supabase.instance.client.rpc('get_credit_summary') as Map;
+  return jsonPaise(data['paid_this_month_paise']);
+});
 
 class CreditScreen extends ConsumerStatefulWidget {
   const CreditScreen({super.key});
@@ -20,6 +42,34 @@ class CreditScreen extends ConsumerStatefulWidget {
 
 class _CreditScreenState extends ConsumerState<CreditScreen> {
   bool _openingPayment = false;
+  bool _openingStatement = false;
+  Future<void> _statement(String vendor) async {
+    if (_openingStatement) return;
+    setState(() => _openingStatement = true);
+    try {
+      final data = Map<String, dynamic>.from(
+        await Supabase.instance.client.rpc(
+          'get_vendor_statement',
+          params: {'p_vendor_id': vendor},
+        ) as Map,
+      );
+      final statement = VendorStatement.fromJson(data);
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => VendorStatementScreen(statement: statement),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(expenseError(e))));
+      }
+    } finally {
+      if (mounted) setState(() => _openingStatement = false);
+    }
+  }
+
   Future<void> _refresh() async {
     ref.invalidate(creditLedgerProvider);
     ref.invalidate(entryContextProvider);
@@ -133,6 +183,24 @@ class _CreditScreenState extends ConsumerState<CreditScreen> {
                               style: Theme.of(context).textTheme.headlineMedium
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
+                            const SizedBox(height: 12),
+                            ref
+                                .watch(creditPaidMonthProvider)
+                                .when(
+                                  data: (paid) => Text(
+                                    'Credit payments this month: ${Money(paid).formatted}',
+                                  ),
+                                  loading: () => const Text(
+                                    'Loading monthly credit payments…',
+                                  ),
+                                  error: (_, _) => TextButton(
+                                    onPressed: () =>
+                                        ref.invalidate(creditPaidMonthProvider),
+                                    child: const Text(
+                                      'Retry monthly credit total',
+                                    ),
+                                  ),
+                                ),
                             const SizedBox(height: 10),
                             const Text(
                               'Record full or partial payments when money is actually paid.',
@@ -151,9 +219,26 @@ class _CreditScreenState extends ConsumerState<CreditScreen> {
                     for (final group in groups.values) ...[
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: Text(
-                          group.first.vendorName ?? 'No vendor assigned',
-                          style: Theme.of(context).textTheme.titleLarge,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              group.first.vendorName ?? 'No vendor assigned',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            if (group.first.vendorId != null)
+                              TextButton.icon(
+                                onPressed: _openingStatement
+                                    ? null
+                                    : () => _statement(group.first.vendorId!),
+                                icon: const Icon(Icons.picture_as_pdf_outlined),
+                                label: Text(
+                                  _openingStatement
+                                      ? 'Preparing statement…'
+                                      : 'Share payment statement',
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                       for (final record in group)

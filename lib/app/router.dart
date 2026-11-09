@@ -15,6 +15,11 @@ import '../features/sales/sales_screen.dart';
 import '../features/reconciliation/day_end_screen.dart';
 import '../features/masters/masters_screen.dart';
 import '../features/settings/more_screen.dart';
+import '../features/staff/staff_screen.dart';
+import '../features/audit/audit_screen.dart';
+import '../features/reports/reports_screen.dart';
+import '../features/backup/backup_screen.dart';
+import '../features/user_management/users_screen.dart';
 
 class _RouterRefresh extends ChangeNotifier {
   void refresh() => notifyListeners();
@@ -39,11 +44,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         return path == '/access' ? null : '/access';
       }
       if (['/login', '/loading', '/access'].contains(path)) return '/';
+      if (path == '/expenses/new' &&
+          !profile.asData!.value!.can('expenses.create')) {
+        return '/expenses';
+      }
       if ([
             '/credit',
             '/sales',
             '/day-end',
             '/masters',
+            '/staff',
+            '/audit',
+            '/reports',
+            '/backups',
+            '/users',
           ].any((route) => path == route || path.startsWith('$route/')) &&
           profile.asData!.value!.role != UserRole.admin) {
         return '/';
@@ -64,6 +78,30 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/expenses/new',
         pageBuilder: (_, state) => _page(state, const ExpenseFormScreen()),
+      ),
+      GoRoute(
+        path: '/staff',
+        pageBuilder: (_, s) => _page(s, const StaffScreen()),
+      ),
+      GoRoute(
+        path: '/audit',
+        pageBuilder: (_, s) => _page(s, const AuditScreen()),
+      ),
+      GoRoute(
+        path: '/reports',
+        pageBuilder: (_, s) => _page(s, const ReportsScreen()),
+      ),
+      GoRoute(
+        path: '/backups',
+        pageBuilder: (_, s) => _page(s, const BackupScreen()),
+      ),
+      GoRoute(
+        path: '/users',
+        pageBuilder: (_, s) => _page(s, const UsersScreen()),
+      ),
+      GoRoute(
+        path: '/password',
+        pageBuilder: (_, s) => _page(s, const PasswordScreen()),
       ),
       GoRoute(
         path: '/sales',

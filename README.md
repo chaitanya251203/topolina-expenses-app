@@ -1,8 +1,8 @@
 # Topolina
 
 An Android cafe accounting app built with Flutter and Supabase. Internet is
-required. Version **0.2.0** adds working daily accounting workflows to the
-foundation. It is a development build; the complete original scope is still in progress.
+required. Version **1.0.0** includes the complete accounting workflow and a
+privately signed production APK.
 
 ## What works now
 
@@ -13,6 +13,9 @@ foundation. It is a development build; the complete original scope is still in p
 - Live dashboard totals, shared admin/waiter expense entry and history, exact
   manual/calculated amounts, immediate/partial payments and on-credit purchases.
 - Admin credit ledger with payment history and full/partial settlement.
+- Vendor payment-statement PDFs with the logo, purchase dates, recorded payment
+  dates, original/paid/pending amounts and an exact balance. Preview, save,
+  print or share through Android's share menu.
 - Daily expected sales and net collections, calculated reconciliation with
   contributing payments, close/reopen workflows and audited reasons.
 - Category, vendor and item creation/editing/deactivation, searchable category
@@ -21,11 +24,19 @@ foundation. It is a development build; the complete original scope is still in p
   category seeds, read models and service-only first-admin provisioning.
 - Exact paise parsing, fractional-quantity rounding and reconciliation helpers.
 - Asia/Kolkata calendar dates with the previous-day grace window ending at 01:00.
+- Staff management, monthly salary obligations, partial payments, and linking an
+  existing salary expense without duplicating it.
+- Admin corrections and payment/expense voids with mandatory reasons, historical
+  values, closed-day checks and an audit viewer.
+- Waiter account creation, password resets, active/inactive accounts, configurable
+  expense permissions and self-service password changes.
+- Daily/monthly reports, category/vendor/staff/mode/status filters, historical
+  balances, payment charts, reconciliation history and exact INR CSV exports.
+- Manual and scheduled server snapshots, native Android file export/import,
+  checksum validation, atomic restore and mandatory pre-restore safety snapshots.
 
-Staff/payroll screens, waiter-account/permission management, reports, expense
-corrections, in-app backup/restore and final production release signing remain
-later stages. Direct financial table writes remain revoked: transactions are
-saved through permission-checked, idempotent RPCs. No demo financial data is seeded.
+Direct financial table writes remain revoked: transactions are saved through
+permission-checked, idempotent RPCs. No demo financial data is seeded.
 
 ## Setup
 
@@ -64,8 +75,8 @@ observed Wi-Fi DNS failure; wider network/IP blocking still requires device test
 
 `lib/app` owns theme and navigation. `lib/core` contains configuration, exact
 money/date logic and reusable widgets. `lib/features` separates authentication,
-workspace presentation and category repositories/providers/screens. Future
-features use the same feature-based boundaries.
+workspace, expenses, reconciliation, masters, payroll, audit, users, reports and
+backup repositories/providers/screens.
 
 Supabase is authoritative. Flutter repositories make HTTPS requests using the
 signed-in user's session. PostgreSQL grants, RLS and transactional functions
@@ -119,7 +130,8 @@ node tools/database/remote.mjs verify
 `node tools/database/remote.mjs backup` creates a consistent application-data
 safety snapshot in ignored `.tooling/backups`, preserving PostgreSQL money as
 exact JSON text. This is an operator safeguard, not a full Auth/project backup
-or the pending in-app backup/restore feature.
+or a portable in-app restore file. In-app backups use their own versioned,
+checksummed envelope described below.
 
 The migration command records versions in Supabase's migration-history table,
 applies each file transactionally and does not reset or delete existing data.
@@ -148,8 +160,54 @@ They never print credentials or tokens. `TOPOLINA_DNS_SERVER` optionally selects
 a resolver for this operator tool only; it does not change device/system DNS.
 
 Public sign-up should be disabled in production Auth settings after bootstrap;
-waiter accounts will be created through the admin workflow in a later stage.
+waiter accounts are created through **More → App users & permissions**.
 Unprovisioned Auth users cannot access business records.
+
+Deploy the Auth administration function after database migrations:
+
+```powershell
+npx supabase functions deploy manage-users --remote=YOUR_PROJECT_REF --use-api --yes
+```
+
+Its handler validates the caller through Auth and the live active admin profile.
+The service-role key stays in Supabase's function environment. The handler never
+accepts an arbitrary target role or returns credentials. Configurable waiter
+permissions are enforced both by RPC boundaries and direct table RLS.
+
+## Reports and recovery
+
+In **Credit ledger**, choose **Share payment statement** under a vendor. The
+statement fetches a fresh, coherent server snapshot and lists only that vendor's
+pending purchases, plus payments already recorded against those purchases. It
+includes the preparation time and reference. Sharing a statement changes no
+accounting records. Vendor contact/address are included when entered; internal
+notes and staff/payroll details are excluded. Assign a vendor to an expense
+before creating its vendor statement.
+
+Expense purchases follow their purchase dates; payments follow their actual
+payment dates. Outstanding balances use only payments through the report's end
+date and include older unpaid purchases. Expense filters do not allocate sales
+to categories: sales and reconciliation always show the complete dates.
+Status filters describe the balance at the report end date. CSV values remain
+exact decimal INR strings, and free-form spreadsheet formulas are escaped.
+
+**More → Backups & restore** creates a coherent application snapshot on the
+server, then offers Android's native save dialog. Automatic daily/weekly
+snapshots run on Supabase Cron even while the app is closed. The default is
+daily, retaining 14 snapshots; the admin can change frequency and retention.
+The hourly worker creates a snapshot only when the configured interval is due.
+
+Restores require the current admin password, a reason and explicit confirmation.
+Only matching project identity, format/version and SHA-256 checksums are
+accepted. Database constraints and payment totals are checked transactionally.
+A safety snapshot is taken before replacement. Failure rolls the entire restore
+back. Audit history, users, roles and passwords are preserved. Saved request
+receipts from before a restore cannot silently replay old writes.
+
+These are application-data snapshots, **not complete Supabase project/Auth
+backups**. A mobile restore accepts up to 50 MiB of payload (60 MiB file envelope).
+Operator recovery is required for larger datasets. Export files contain cafe
+financial data. Reinstalling the app does not delete the hosted ledger.
 
 ## Validation
 
@@ -172,13 +230,22 @@ PostgreSQL (PGlite, development-only). The Supabase Auth boundary is stubbed;
 these tests do not replace hosted authentication or Android device testing.
 They verify category seeds, anonymous denial, waiter restrictions, exact cutoff,
 credit-payment dates, partial payroll history, closed-day locks, request replay,
-overpayment, closing snapshots and audit/deactivation behavior.
+overpayment, closing snapshots, corrections/voids, historical reports, permission
+changes, checksum rejection, atomic restore, safety snapshots and stale retries.
+The account-handler tests also cover authorization and empty RPC responses.
 
 `tools/database/smoke.mjs` validates the hosted authenticated transaction flow
 inside a transaction which is always rolled back. `tools/check_connection.dart`
 checks the actual app transport; optional `TOPOLINA_SMOKE_EMAIL` and
 `TOPOLINA_SMOKE_PASSWORD` enable read-only authenticated API checks. These
 credentials are environment-only and are never stored or printed.
+
+`tools/database/account-smoke.mjs` tests hosted create/retry/login/reset and
+deactivation using a temporary account, then removes it. It requires operator
+CLI login and `TOPOLINA_ADMIN_EMAIL` / `TOPOLINA_ADMIN_PASSWORD`. It obtains a
+cleanup credential in memory and never prints or saves it. It creates no
+financial fixtures. `release-health.mjs` verifies protection/scheduling and
+creates an actual release safety snapshot.
 
 ## APK builds
 
@@ -199,9 +266,21 @@ the keystore securely for future APK updates. Then build:
 flutter build apk --release --dart-define-from-file=config/supabase.local.json
 ```
 
-The final production APK, operational backup/recovery and real-device financial
-acceptance checks are later delivery stages. Never use a debug-signed build as
-the production release.
+Output: `build/app/outputs/flutter-apk/app-release.apk`. The delivery copy is
+`build/releases/Topolina-1.0.0-release.apk`. This universal APK includes supported
+ARM and emulator architectures. Release mode removes Flutter's debug runtime
+and debug-only assets. APKs and private signing material are excluded from Git.
+
+The production certificate differs from the earlier development APK. For this
+one-time transition, uninstall the development app, install the release APK,
+and sign in again. Hosted cafe records remain in Supabase. Future releases use
+the same private production key and can install as updates. Keep a secure copy
+of `android/topolina-release.jks` and `android/key.properties`; losing this key
+prevents updates to existing installations.
+
+Automated and hosted checks are documented in `docs/release-1.0.0.md`. Physical
+phone installation, vendor file-picker behavior and the user's Wi-Fi network
+still require a real-device acceptance check.
 
 ## Confirmed business behavior
 

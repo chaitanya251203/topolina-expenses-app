@@ -40,6 +40,20 @@ class MoreScreen extends ConsumerWidget {
             Text(admin ? 'Administrator' : 'Waiter'),
             const SizedBox(height: 24),
             if (admin) ...[
+              link(Icons.badge_outlined, 'Staff & salaries', '/staff'),
+              const SizedBox(height: 10),
+              link(Icons.insights_outlined, 'Reports & export', '/reports'),
+              const SizedBox(height: 10),
+              link(
+                Icons.manage_accounts_outlined,
+                'App users & permissions',
+                '/users',
+              ),
+              const SizedBox(height: 10),
+              link(Icons.backup_outlined, 'Backups & restore', '/backups'),
+              const SizedBox(height: 10),
+              link(Icons.history_outlined, 'Audit history', '/audit'),
+              const SizedBox(height: 10),
               link(Icons.tune, 'Categories, vendors & items', '/masters'),
               const SizedBox(height: 10),
               link(
@@ -71,6 +85,8 @@ class MoreScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
+            link(Icons.lock_outline, 'Change your password', '/password'),
+            const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: () async {
                 try {

@@ -10,17 +10,25 @@ class SessionProfile {
     required this.role,
     required this.active,
     required this.serverTime,
+    this.permissions = const ['expenses.create', 'expenses.read_own'],
   });
   final String id, name;
   final UserRole role;
   final bool active;
   final DateTime serverTime;
+  final List<String> permissions;
+  bool can(String permission) =>
+      role == UserRole.admin || permissions.contains(permission);
   factory SessionProfile.fromJson(Map<String, dynamic> json) => SessionProfile(
     id: json['id'] as String,
     name: json['full_name'] as String,
     role: UserRole.values.byName(json['role_code'] as String),
     active: json['active'] as bool,
     serverTime: DateTime.parse(json['server_time'] as String),
+    permissions:
+        (json['permissions'] as List? ??
+                ['expenses.create', 'expenses.read_own'])
+            .cast<String>(),
   );
 }
 

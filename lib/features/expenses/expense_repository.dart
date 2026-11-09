@@ -39,6 +39,14 @@ String paymentModeLabel(String mode) => switch (mode) {
   _ => mode,
 };
 
+String eventTimeLabel(String value) {
+  final date = DateTime.parse(value)
+      .toUtc()
+      .add(const Duration(hours: 5, minutes: 30));
+  final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
+  return '${expenseDateLabel(date.toIso8601String().substring(0, 10))} · $hour:${date.minute.toString().padLeft(2, '0')} ${date.hour < 12 ? 'am' : 'pm'} IST';
+}
+
 String expenseError(Object error) {
   if (error is ExpenseValidationException) return error.message;
   if (error is FormatException) return error.message;

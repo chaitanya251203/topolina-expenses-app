@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/accounting/money.dart';
 import '../../core/categories/category_visuals.dart';
 import 'expense_repository.dart';
+import '../audit/correction_actions.dart';
 
 class ExpenseChoiceField extends StatelessWidget {
   const ExpenseChoiceField({
@@ -403,6 +404,7 @@ Future<void> showExpenseDetails(
         _DetailLine('Paid so far', Money(record.paidPaise).formatted),
         _DetailLine('Outstanding', Money(record.outstandingPaise).formatted),
         _DetailLine('Entered by', record.createdByName),
+        CorrectionActions(expense: record),
         if (record.notes?.isNotEmpty == true) ...[
           const Divider(height: 32),
           const Text('Notes', style: TextStyle(fontWeight: FontWeight.w700)),
@@ -437,6 +439,7 @@ Future<void> showExpenseDetails(
                   const SizedBox(height: 4),
                   Text(payment.notes!),
                 ],
+                CorrectionActions(expense: record, payment: payment),
               ],
             ),
           ),

@@ -67,7 +67,9 @@ class WorkspaceScreen extends ConsumerWidget {
               const SizedBox(height: 22),
               PressMotion(
                 child: FilledButton.icon(
-                  onPressed: () => _open(context, ref, '/expenses/new'),
+                  onPressed: profile.can('expenses.create')
+                      ? () => _open(context, ref, '/expenses/new')
+                      : null,
                   icon: const Icon(Icons.add),
                   label: const Text('Add expense'),
                 ),
@@ -247,6 +249,18 @@ class WorkspaceScreen extends ConsumerWidget {
                 onTap: () => _open(context, ref, '/expenses'),
               ),
               if (admin) ...[
+                _Action(
+                  icon: Icons.badge_outlined,
+                  title: 'Staff & salaries',
+                  subtitle: 'Monthly dues and partial salary payments',
+                  onTap: () => _open(context, ref, '/staff'),
+                ),
+                _Action(
+                  icon: Icons.insights_outlined,
+                  title: 'Reports',
+                  subtitle: 'Review trends, filter records and export',
+                  onTap: () => _open(context, ref, '/reports'),
+                ),
                 _Action(
                   icon: Icons.point_of_sale_outlined,
                   title: 'Sales & collections',

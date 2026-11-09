@@ -18,6 +18,10 @@ if ($env:JAVA_TOOL_OPTIONS -notmatch '-Djdk.net.unixdomain.tmpdir=') {
 $localAndroid = Join-Path $projectRoot '.tooling/android-sdk'
 if (Test-Path -LiteralPath $localAndroid) { $env:ANDROID_HOME = $localAndroid }
 if (!$FlutterArgs) { $FlutterArgs = @('analyze') }
+# Use the installed SDK without a background Git history fetch during builds.
+if ($FlutterArgs -notcontains '--version-check') {
+    $FlutterArgs = @('--no-version-check') + $FlutterArgs
+}
 Push-Location $projectRoot
 try { & $flutterCommand @FlutterArgs; $flutterExit = $LASTEXITCODE }
 finally { Pop-Location }

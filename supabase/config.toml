@@ -6,3 +6,7 @@ major_version = 17
 [auth]
 enable_signup = false
 minimum_password_length = 8
+
+[functions.manage-users]
+# The handler verifies every JWT through Auth and checks the live admin profile.
+verify_jwt = false
