@@ -3,6 +3,7 @@
 .flutter-plugins-dependencies
 .packages
 build/
+output/pdf/qa/
 coverage/
 android/.gradle/
 android/.kotlin/

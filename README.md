@@ -6,6 +6,10 @@ privately signed production APK.
 
 ## What works now
 
+User documentation: [Functionality guide](output/pdf/Topolina_Functionality_Guide.pdf)
+and [Functionality flow map](output/pdf/Topolina_Functionality_Flow_Map.pdf).
+Editable descriptions are in [docs/functionality-guide.md](docs/functionality-guide.md).
+
 - Branded sign-in using the supplied Topolina logo, cream/forest-green Material 3
   styling, rounded buttons, subtle press/page/loading animations and reduced-motion support.
 - Supabase Auth integration, session-aware navigation, active-account checks,
