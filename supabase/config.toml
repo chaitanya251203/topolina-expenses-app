@@ -1,0 +1,8 @@
+project_id = "topolina"
+
+[db]
+major_version = 17
+
+[auth]
+enable_signup = false
+minimum_password_length = 8

@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test foundation.test.mjs financial.test.mjs", "inspect": "node remote.mjs inspect", "migrate": "node remote.mjs migrate" },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.15",
+    "pg": "^8.23.1"
+  }
+}
