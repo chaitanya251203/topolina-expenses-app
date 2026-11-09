@@ -24,7 +24,8 @@ Admin: Overview, Expenses, Day end, More. More contains Sales, Credit ledger,
 Masters (categories/items/vendors), Staff/payroll, Reports, Users/permissions,
 Backups and Audit history.
 
-Waiter: My day and Add expense. Available category/item/vendor data is shared;
+Waiter: My day, Expenses and More, with Add expense available by permission.
+Available category/item/vendor data is shared;
 financial history is limited to that user's entries on currently eligible dates.
 
 ## Delivery stages

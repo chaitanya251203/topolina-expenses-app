@@ -50,6 +50,15 @@ project. Internet is required.
 
 ## Install
 
+[Download the production APK](https://github.com/chaitanya251203/topolina-expenses-app/releases/download/v1.0.0/Topolina-1.0.0-release.apk)
+
+- Size: 65,556,527 bytes (62.52 MiB).
+- Package/version: `app.topolina.topolina`, `1.0.0`, version code `3`.
+- Android 7.0/API 24 minimum, target API 36; ARM32, ARM64 and x86-64 included.
+- APK Signature Scheme v2 verified. The release is not debuggable.
+- Build source: `e60a5994ac1cda187970b69ee350172f7ca142e7`.
+- SHA-256: `a4c45ed7501ce525b890839a0d3172b33471dac9d66c969945fa3fc7733b2ccc`.
+
 Download the signed release APK. It uses a production certificate. The earlier
 development APK used another certificate, so uninstall that development version
 once before installing this release. Sign in with your existing account; hosted
